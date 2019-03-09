@@ -4,15 +4,15 @@ A genetic evolution simulation
 ## the time 
 - the time goes by cycle units
 - each cyle run add one to time
-- times goes until end of [era](#the-era) is reached
+- times goes until end of era is reached
 
 ## the era
 - an era start at time 0 (or zero time) 
 - an era terminates when no more cells (return to nolife) ...
-- an era terminates at maximum when end of simulation reached (time MAX_ERA_TIME)
+- or an era terminates atwhen end of simulation reached (time MAX_ERA_TIME)
 
 ## at zero time
-- there is no life (no cells) 
+- there is no life (no cells) the Cube is empty
 - the bottom of the Cube is randomly seeded by a generation of cells (NCELL_ZERO_TIME)
 - time starts and goes on cycle by cycle ...
 
@@ -20,7 +20,7 @@ A genetic evolution simulation
 - the Cube is the world where simulated life take place
 - the Cube is composed of 1000x1000x1000 small cubes or cubes(lowercase)
 - the cube have direction north,south,east,west,top,bottom
-- each cycle the top of the Cube drop light (photons) as energy for life
+- the Cune is watered by photons to provide energy
 
 ## a cube 
 - a cube may contain  a cell and only one
@@ -29,10 +29,11 @@ A genetic evolution simulation
 - a cube has a location expressed in longitude,latitude,altitude (or lon,lat,alt in that order)
 
 ## a photon
-- a photo is an energy provider for cells
+- a photon is an energy provider for cells
 - a photon fall verticaly from top to bottom 
-- a photo is absorbed by first touched cell
-- a photo wich is not absorbed is lost
+- a photon is absorbed by first touched cell
+- a photon which is not absorbed is lost (dropped on soil)
+- each cycle the top of the Cube drop photons (MAX_PHOTONS_DROPS) as energy for life
 
 ## a cell
 - a cell is a component of a plant 
@@ -59,5 +60,10 @@ A genetic evolution simulation
 
 ## a cycle
 - each cycle is running identical
+### steps
+    - photons are absorbed, cell photons increases
+    - for each gene of the genome do the the corresponding job (tranfert or grow to the appropriate direction) 
+    - cell photons dicreased by one (photon is consumed)
+    - if photon storage is too loaw cell  die (if photon count reached -CELL_CYCLES_DIE)
 
-
+COMING SOON .... THE EVOLUTION !

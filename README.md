@@ -2,12 +2,22 @@
 A genetic evolution simulation
 
 ## the time 
-- the time goes by cycle 
-- time start at 0 (zero time) to end of simulation (end time) ...
-- each time cycle (or cycle) is running identical
+- the time goes by cycle units
+- each cyle run add one to time
+- times goes until end of [era](# the era) is reached
 
-## the world or the Cube (notice the uppercase)
-- the Cube is the location where simulated life take place
+## the era
+- an era start at time 0 (or zero time) 
+- an era terminates when no more cells (return to nolife) ...
+- an era terminates at maximum when end of simulation reached (time MAX_ERA_TIME)
+
+## at zero time
+- there is no life (no cells) 
+- the bottom of the Cube is randomly seeded by a generation of cells (NCELL_ZERO_TIME)
+- time starts and goes on cycle by cycle ...
+
+## the Cube (notice the uppercase)
+- the Cube is the world where simulated life take place
 - the Cube is composed of 1000x1000x1000 small cubes or cubes(lowercase)
 - the cube have direction north,south,east,west,top,bottom
 - each cycle the top of the Cube drop light (photons) as energy for life
@@ -25,14 +35,14 @@ A genetic evolution simulation
 - a photo wich is not absorbed is lost
 
 ## a cell
-- a cell is a component of a plant a Cube's living being 
+- a cell is a component of a plant 
 - a cell is in a cube therefore has a location
 - a cell has a genome
 - each cycle the cell execute his genome code
 - each cell absorbs the photons that fall on it for a cycle
 - a cell consumes one photon per cycle
-- a cell may store a maximum of 20 photons
-- a cell with 0 photons during 3 cycles die (disappear)
+- a cell may store photons (to maximum of MAX_CELL_PHOTON)
+- a cell with 0 photons during few cycles die (disappear CELL_CYCLES_DIE)
 - a cell may transfert photons in all directions depending on its genome
 - a cell may grow (duplicate  itselfs) in all directions depending on its genome
 
@@ -41,15 +51,13 @@ A genetic evolution simulation
 - a gene is selected from : GN,GS,GE,GW,GB,GT, TN,TS,TE,TW,TB,TT
 - GN means grow north, GE mean grow east, ... one for each direction
 - TN means transfert 1 photon north, ... one for each direction
+- genome is duplicated exactly when cell grow (duplicate  itselfs)
 
 ## a plant
 - a plant the unique live being of the Cube 
 - a plant is composed of all the cells originated from same cell growth
 
 ## a cycle
+- each cycle is running identical
 
-## at zero time
-- the bottom of the Cube is seeded by a generation of cells
-- time goes on cycle by cycle ...
 
-## an era

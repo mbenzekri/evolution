@@ -1,0 +1,24 @@
+{
+  "name": "evolution",
+  "version": "1.0.0",
+  "description": "genetic evolution simulation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbenzekri/evolution.git"
+  },
+  "keywords": [
+    "genetic",
+    "evolution",
+    "simulation"
+  ],
+  "author": "Mohamed Ben Zekri",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mbenzekri/evolution/issues"
+  },
+  "homepage": "https://github.com/mbenzekri/evolution#readme"
+}

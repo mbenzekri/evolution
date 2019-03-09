@@ -20,7 +20,7 @@ A genetic evolution simulation
 - the Cube is the world where simulated life take place
 - the Cube is composed of 1000x1000x1000 small cubes or cubes(lowercase)
 - the cube have direction north,south,east,west,top,bottom
-- the Cune is watered by photons to provide energy
+- the Cube is watered by photons to provide energy
 
 ## a cube 
 - a cube may contain  a cell and only one
@@ -64,6 +64,6 @@ A genetic evolution simulation
     - photons are absorbed, cell photons increases
     - for each gene of the genome do the the corresponding job (tranfert or grow to the appropriate direction) 
     - cell photons dicreased by one (photon is consumed)
-    - if photon storage is too loaw cell  die (if photon count reached -CELL_CYCLES_DIE)
+    - if photon storage is too low cell  die (if photon count reached -CELL_CYCLES_DIE)
 
 COMING SOON .... THE EVOLUTION !

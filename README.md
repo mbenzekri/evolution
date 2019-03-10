@@ -4,6 +4,7 @@ A genetic evolution simulation
 ## the time 
 - the time goes by cycle units
 - each cyle run add one to time
+- each cycle is running identical
 - times goes until end of era is reached
 
 ## the era
@@ -59,11 +60,10 @@ A genetic evolution simulation
 - a plant is composed of all the cells originated from same cell growth
 
 ## a cycle
-- each cycle is running identical
-### steps
-    - photons are absorbed, cell photons increases
-    - for each gene of the genome do the the corresponding job (tranfert or grow to the appropriate direction) 
-    - cell photons dicreased by one (photon is consumed)
-    - if photon storage is too low cell  die (if photon count reached -CELL_CYCLES_DIE)
+- photons are absorbed, cell photons increases
+- for each gene of the genome do the the corresponding job (tranfert or grow to the appropriate direction) 
+- cell photons dicreased by one (photon is consumed)
+- if photon storage is too low cell  die (if photon count reached -CELL_CYCLES_DIE)
+- for equity cells are treated randomly for each cycle
 
 COMING SOON .... THE EVOLUTION !

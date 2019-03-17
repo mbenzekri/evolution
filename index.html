@@ -7,6 +7,8 @@
     <style>
         body {
             margin: 0;
+            color:wheat;
+            background-color:rgb(20, 20, 20) ;
         }
 
         #div3d {
@@ -23,6 +25,15 @@
             left: 0;
             overflow-x: hidden;
             padding-top: 20px;
+            padding: 10px;
+            background-color:teal ;
+        }
+
+        input {
+            width: 100px;
+        }
+        .pull {
+            float: right;
         }
     </style>
     <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
@@ -35,14 +46,58 @@
 <body>
 
     <div class="sidenav" id="app">
-        <h1>{{ title }}</h1>
+        <h1>{{ title }}</h1><i v-bind:class="{ 'fa-caret-up': conf, 'fa-caret-down': !conf }" v-on:click="conf=!conf" class="fa pull" ></i>
+        <h2>Conf</i></h2>
+        <table v-show="conf">
+            <tr>
+                <td>genome size:</td>
+                <td><input type="number" maxlength="5" size="5" value="10"></td>
+            </tr>
+            <tr>
+                <td>cube width:</td>
+                <td><input type="number" maxlength="5" size="5" value="100"></td>
+            </tr>
+            <tr>
+                <td>cube pop size:</td>
+                <td><input type="number" maxlength="5" size="5" value="100"></td>
+            </tr>
+            <tr>
+                <td>photons per drop:</td>
+                <td><input type="number" maxlength="5" size="5" value="5"></td>
+            </tr>
+            <tr>
+                <td>era timeout:</td>
+                <td><input type="number" maxlength="5" size="5" value="300"></td>
+            </tr>
+            <tr>
+                <td>era max cycles:</td>
+                <td><input type="number" maxlength="5" size="5" value="200"></td>
+            </tr>
+            <tr>
+                <td>cell max photons:</td>
+                <td><input type="number" maxlength="5" size="5" value="3"></td>
+            </tr>
+            <tr>
+                <td>cell init photons:</td>
+                <td><input type="number" maxlength="5" size="5" value="0"></td>
+            </tr>
+            <tr>
+                <td>cell max fasting:</td>
+                <td><input type="number" maxlength="5" size="5" value="3"></td>
+            </tr>
+            <tr>
+                <td>scene update range:</td>
+                <td><input type="number" maxlength="5" size="5" value="10"></td>
+            </tr>
+        </table>
+        <h2>Era</h2>
         <div>
-            <button v-on:click="start()">start</button>
-            <button v-on:click="seed()">seed</button>
-            <button><i class="fa fa-stop"></i></button>
+            <button v-on:click="start('div3d')">start</button>
+            <button><i v-on:click="stop()" class="fa fa-stop"></i></button>
             <button><i class="fa fa-pause"></i></button>
             <button><i v-on:click="cycle(1)" class="fa fa-play"></i></button>
             <button><i v-on:click="cycle(10)" class="fa fa-forward"></i></button>
+            <button><i v-on:click="cycle(1e10)" class="fa fa-fast-forward"></i></button>
         </div>
         <table>
             <tr>

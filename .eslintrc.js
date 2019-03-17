@@ -2,7 +2,7 @@ module.exports = {
     "extends": "airbnb-base",
     "env":{"browser": true},
     "rules": {
-        "indent": [2, 4],
+        "indent": [2, 4, {SwitchCase: 1}],
         "no-console": 0,
         "camelcase":  0,
         "max-len":  0,

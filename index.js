@@ -14,7 +14,23 @@ class Cube3d {
         this.vue = new Vue({
             el: '#app',
             data: {
-                conf: true,
+                // View
+                conf: false,
+                sidenav: true,
+                // options
+                options: {
+                    genome_size: 10,
+                    cube_width: 100,
+                    cube_pop_size: 100,
+                    photons_per_drop: 5,
+                    era_timeout: 300,
+                    era_max_cycles: 200,
+                    cell_max_photons: 3,
+                    cell_init_photons: 0,
+                    cell_max_fasting: 3,
+                    scene_update_range: 10,
+                },
+                // logging
                 title: 'The Cube !',
                 time: 0,
                 duration: 0,
@@ -25,7 +41,7 @@ class Cube3d {
             methods: {
                 start: () => {
                     this.terminate();
-                    this.start();
+                    this.start(this.vue.$data.options);
                 },
                 cycle: (count) => {
                     this.cycle(count);
@@ -35,6 +51,13 @@ class Cube3d {
                 },
             },
         });
+        // Cube worker
+        this.worker = new Worker('worker.js');
+        this.worker.onmessage = (event) => {
+            console.log(`message receive on PAGE of type ${event.data.type}`);
+            if (this[event.data.type]) this[event.data.type](event.data);
+            return true;
+        };
     }
 
     start() {
@@ -106,30 +129,39 @@ class Cube3d {
         light.position.set(0, 1, 1);
         this.scene.add(light);
 
+        window.addEventListener('wheel', (ev) => {
+            this.camera.translateZ(-Math.sign(ev.deltaY) * 0.01);
+            this.changed = true;
+        });
+
+        // let oldx;
+        // window.addEventListener('mousemove', (ev) => {
+        //     // console.log('rotate');
+        //     if (oldx !== null) {
+        //         const sign = Math.sign(oldx - ev.screenX);
+        //         console.log(`rotate ${sign}`);
+        //         // this.camera.rotateY(sign * Math.PI / 1800);
+        //         // this.changed = true;
+        //     }
+        //     oldx = ev.screenX;
+        // });
 
         window.addEventListener('keydown', (ev) => {
             switch (ev.keyCode) {
-                case 65: this.camera.position.z += 0.05; break;
-                case 81: this.camera.position.z -= 0.05; break;
-                case 38: this.camera.translateZ(-0.05); break;
-                case 40: this.camera.translateZ(0.05); break;
-                case 37: this.camera.rotateY(Math.PI / 18); break;
-                case 39: this.camera.rotateY(-Math.PI / 18); break;
-                case 90: this.camera.rotateX(-Math.PI / 18); break;
-                case 83: this.camera.rotateX(Math.PI / 18); break;
+                case 65: this.camera.position.z += 0.05; break; // key A
+                case 81: this.camera.position.z -= 0.05; break; // key Q
+                case 38: this.camera.translateZ(-0.02); break; // Arrow UP
+                case 40: this.camera.translateZ(0.02); break; // Arrow DOWN
+                case 37: this.camera.rotateY(Math.PI / 18); break; // Arrow RIGHT
+                case 39: this.camera.rotateY(-Math.PI / 18); break; // Arrow LEFT
+                case 90: this.camera.rotateX(-Math.PI / 18); break; // Key Z
+                case 83: this.camera.rotateX(Math.PI / 18); break; // Key S
                 default: break;
             }
             this.changed = true;
         });
 
-        // Cube worker
-        this.worker = new Worker('worker.js');
-        this.worker.onmessage = (event) => {
-            console.log(`message receive on PAGE of type ${event.data.type}`);
-            if (this[event.data.type]) this[event.data.type](event.data);
-            return true;
-        };
-        this.worker.postMessage({ type: 'start' });
+        this.worker.postMessage({ type: 'start', options: this.vue.$data.options });
         this.state = C3DState.running;
         this.changed = true;
         this.render();
@@ -139,8 +171,6 @@ class Cube3d {
     terminate() {
         if (this.state === C3DState.idle) return;
         this.state = C3DState.ending;
-        this.worker.terminate();
-        this.vue = null;
         this.scene = null;
         this.plant_materials = [];
         this.camera = null;

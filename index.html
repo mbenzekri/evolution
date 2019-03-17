@@ -10,7 +10,12 @@
             color:wheat;
             background-color:rgb(20, 20, 20) ;
         }
-
+        h2 {
+            margin: 10px 0px;
+            padding: 5px;
+            border-radius: 10px;
+            border: 2px solid wheat;
+        }
         #div3d {
             width: 100%;
             height: 100%
@@ -27,6 +32,9 @@
             padding-top: 20px;
             padding: 10px;
             background-color:teal ;
+        }
+        .hide {
+            left: -245px;
         }
 
         input {
@@ -45,49 +53,49 @@
 
 <body>
 
-    <div class="sidenav" id="app">
-        <h1>{{ title }}</h1><i v-bind:class="{ 'fa-caret-up': conf, 'fa-caret-down': !conf }" v-on:click="conf=!conf" class="fa pull" ></i>
-        <h2>Conf</i></h2>
+    <div class="sidenav" id="app" v-bind:class="{hide:!sidenav}"> 
+        <h1>{{ title }}<i v-bind:class="{ 'fa-caret-left': sidenav, 'fa-caret-right': !sidenav }" v-on:click="sidenav=!sidenav" class="fa pull" ></i></h1>
+        <h2 v-on:click="conf=!conf">Conf <i v-bind:class="{ 'fa-caret-up': conf, 'fa-caret-down': !conf }" v-on:click="conf=!conf" class="fa pull" ></i></h2>
         <table v-show="conf">
             <tr>
                 <td>genome size:</td>
-                <td><input type="number" maxlength="5" size="5" value="10"></td>
+                <td><input type="number" v-model="options.genome_size"></td>
             </tr>
             <tr>
                 <td>cube width:</td>
-                <td><input type="number" maxlength="5" size="5" value="100"></td>
+                <td><input type="number" v-model="options.cube_width"></td>
             </tr>
             <tr>
                 <td>cube pop size:</td>
-                <td><input type="number" maxlength="5" size="5" value="100"></td>
+                <td><input type="number" v-model="options.cube_pop_size"></td>
             </tr>
             <tr>
                 <td>photons per drop:</td>
-                <td><input type="number" maxlength="5" size="5" value="5"></td>
+                <td><input type="number" v-model="options.photons_per_drop"></td>
             </tr>
             <tr>
                 <td>era timeout:</td>
-                <td><input type="number" maxlength="5" size="5" value="300"></td>
+                <td><input type="number" v-model="options.era_timeout"></td>
             </tr>
             <tr>
                 <td>era max cycles:</td>
-                <td><input type="number" maxlength="5" size="5" value="200"></td>
+                <td><input type="number" v-model="options.era_max_cycles"></td>
             </tr>
             <tr>
                 <td>cell max photons:</td>
-                <td><input type="number" maxlength="5" size="5" value="3"></td>
+                <td><input type="number" v-model="options.cell_max_photons"></td>
             </tr>
             <tr>
                 <td>cell init photons:</td>
-                <td><input type="number" maxlength="5" size="5" value="0"></td>
+                <td><input type="number" v-model="options.cell_init_photons"></td>
             </tr>
             <tr>
                 <td>cell max fasting:</td>
-                <td><input type="number" maxlength="5" size="5" value="3"></td>
+                <td><input type="number" v-model="options.cell_max_fasting"></td>
             </tr>
             <tr>
                 <td>scene update range:</td>
-                <td><input type="number" maxlength="5" size="5" value="10"></td>
+                <td><input type="number" v-model="options.scene_update_range"></td>
             </tr>
         </table>
         <h2>Era</h2>

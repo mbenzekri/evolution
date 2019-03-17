@@ -302,7 +302,7 @@ class Cube {
         let count = 0;
         return new Promise<void>((resolve, reject) => {
             let loop = ()=> {
-                if (this.time >= this.opts.era_max_cycles || count >= cycles || (current - start) > this.opts.era_timeout) {
+                if (this.time > this.opts.era_max_cycles || count > cycles || (current - start) > this.opts.era_timeout) {
                     this.refresh();
                     (<any>postMessage)({ type: 'time',time:this.time, sec: (current - start), pop:this.cell_pop, birth: this.birth_cycle, death: this.death_cycle });
                     (<any>postMessage)({type: "cycled", count:cycles });

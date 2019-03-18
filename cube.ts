@@ -64,13 +64,13 @@ const DEFAULT_OPTIONS = {
 class Cell {
     private _step = 0;
     private _photons = 0
-    get plant(): Plant { return this.world.plants[this.plantid] }
     get photons(): number { return this._photons }
 
-    constructor(public readonly world: Cube, public readonly plantid: number, public readonly genome: string[], public readonly location: Coords, photons: number) {
+    constructor(public readonly world: Cube, public readonly plant: Plant , public readonly genome: string[], public readonly location: Coords, photons: number) {
+        if (!plant) this.plant = <any>this;
         this.genome = genome
         this.absorb(photons)
-        if (this.plant.cells) this.plant.push(this)
+        this.plant.push(this)
         this.world.birth(this)
     }
 
@@ -100,7 +100,7 @@ class Cell {
         if (this.world.isout([lat, lon, alt])) return
         if (this.world.exists([lat, lon, alt])) return;
 
-        const cell = new Cell(this.world, this.plantid, this.genome, [lat, lon, alt], Math.floor(this.photons / 2))
+        const cell = new Cell(this.world, this.plant, this.genome, [lat, lon, alt], Math.floor(this.photons / 2))
         this._photons = Math.ceil(this.photons / 2)
         return cell;
     }
@@ -145,15 +145,15 @@ class Cell {
 }
 
 class Plant extends Cell {
-    private static plantgen = 0;
+    public readonly plantid = this.world.plants.length;
     public readonly cells: Map<Coords, Cell> = new Map();
-    get plant(): Plant { return this }
     constructor(world: Cube, genome: string[], location: Coords) {
-        super(world, Plant.plantgen++, genome, location, world.opts.cell_init_photons);
-        this.plant.push(this);
+        super(world, null , genome, location, world.opts.cell_init_photons);
+        world.plants.push(this);
+        this.world.birth(this)
     }
     push(cell: Cell) {
-        this.cells.set(cell.location, cell);
+        if (this.cells) this.cells.set(cell.location, cell);
     }
     pop(cell: Cell) {
         this.cells.delete(cell.location);
@@ -177,7 +177,7 @@ class Plant extends Cell {
             locations.forEach(location => {
                 if (!this.world.isin(location) && this.world.exists(location)) {
                     const neibourgh = this.world.get(location);
-                    if (neibourgh.plantid === cell.plantid) stack.push(neibourgh)
+                    if (neibourgh.plant === cell.plant) stack.push(neibourgh)
                 };
             })
         }
@@ -221,15 +221,6 @@ class Cube {
     state() {
         console.log('Cube Status ---------------------------------------------------')
         this.plants.forEach(plant => console.log('plant %d size %d energy %d', plant.plantid, plant.size, plant.energy))
-        if (this.opts.log.cube) {
-            for (let lon = 0; lon < this.opts.cube_width; lon++) {
-                for (let lat = 0; lat < this.opts.cube_width; lat++) {
-                    const col = this.cubes[lon * this.opts.cube_width + lat];
-                    const plants = col.map(cell => cell.plantid + '/' + cell.photons)
-                    console.log('%d , %d => %s', lon, lat, plants.join(','))
-                }
-            }
-        }
         console.log('---------------------------------------------------------------')
     }
     col(lon: number, lat: number) {
@@ -281,7 +272,6 @@ class Cube {
         console.log('Seeding')
         for (let p = 0; p < this.opts.cube_pop_size; p++) {
             const plant = new Plant(this, this.random(), this.freesoil())
-            this.plants.push(plant)
         }
         (<any>postMessage)({type: "seeded", count:this.plants.length })
         console.log('Cube Seeded')
@@ -344,14 +334,14 @@ class Cube {
         this.set(cell.location, cell);
         this.cell_pop++;
         this.birth_cycle++;
-        this.update(cell.location, cell.plantid)
-        if (this.opts.log.birth) console.log('Cell birth at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plantid, this.plants[cell.plantid].size)
+        this.update(cell.location, cell.plant.plantid)
+        if (this.opts.log.birth) console.log('Cell birth at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, this.plants[cell.plant.plantid].size)
     }
     death(cell: Cell) {
         this.delete(cell.location);
         this.cell_pop--;
         this.death_cycle++;
         this.update(cell.location, -1)
-        if (this.opts.log.death) console.log('Cell dead at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plantid, this.plants[cell.plantid].size)
+        if (this.opts.log.death) console.log('Cell dead at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, this.plants[cell.plant.plantid].size)
     }
 }

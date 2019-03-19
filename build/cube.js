@@ -319,6 +319,8 @@ class Cube {
                 current = Math.floor(Date.now() / 1000);
                 this.time++;
                 count++;
+                if ((this.time % this.opts.scene_update_range) === 0)
+                    this.refresh();
                 loop();
             };
             loop();

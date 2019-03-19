@@ -28,7 +28,7 @@ class Cube3d {
                     cell_max_photons: 3,
                     cell_init_photons: 0,
                     cell_max_fasting: 3,
-                    scene_update_range: 10,
+                    scene_update_range: 100,
                 },
                 // logging
                 title: 'The Cube !',

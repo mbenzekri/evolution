@@ -309,8 +309,7 @@ class Cube {
                 // TODOS ==> this.plants.forEach(plant => plant.purge());
                 this.time++;
                 count++
-                // if ((this.time % this.opts.scene_update_range) === 0) this.refresh()
-                // this.refresh()
+                if ((this.time % this.opts.scene_update_range) === 0) this.refresh()
                 loop();
             };
             loop();

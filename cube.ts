@@ -32,8 +32,8 @@ const DEFAULT_OPTIONS = {
     cell_max_fasting: 3,
     scene_update_range: 100,
     log: {
-        birth: false,
-        death: false,
+        birth: true,
+        death: true,
         consume: false,
         absorb: false,
         steps: false,
@@ -66,12 +66,13 @@ class Cell {
     private _photons = 0
     get photons(): number { return this._photons }
 
-    constructor(public readonly world: Cube, public readonly plant: Plant , public readonly genome: string[], public readonly location: Coords, photons: number) {
-        if (!plant) this.plant = <any>this;
+    constructor(public readonly world: Cube, public plant: Plant , public readonly genome: string[], public readonly location: Coords, photons: number) {
         this.genome = genome
         this.absorb(photons)
-        this.plant.push(this)
-        this.world.birth(this)
+        if (plant) {
+            this.plant.push(this)
+            this.world.birth(this)    
+        }
     }
 
 
@@ -149,6 +150,7 @@ class Plant extends Cell {
     public readonly cells: Map<Coords, Cell> = new Map();
     constructor(world: Cube, genome: string[], location: Coords) {
         super(world, null , genome, location, world.opts.cell_init_photons);
+        this.plant = this;
         world.plants.push(this);
         this.world.birth(this)
     }
@@ -195,7 +197,7 @@ class Cube {
     plants: Plant[] = [];
     opts = DEFAULT_OPTIONS;
     // for 3D rendering
-    updates = new Map<string, number[]>();
+    updates = new Map<string, Cell|number>();
     // for statistics purpose
     cell_pop = 0;
     birth_cycle = 0;
@@ -250,6 +252,8 @@ class Cube {
         return !this.isin(location);
     }
     random(): string[] {
+        // return ['GT','GT','GT','GT','GT','GT','GT','GT','GT','GT',];
+        // return ['GN','GT','GE','GT','GS','GT','GO','GT'];
         const genome: string[] = []
         while (genome.length < this.opts.genome_size) {
             const key = Math.floor(Math.random() * Gene.length)
@@ -289,7 +293,7 @@ class Cube {
         // TODO do that randomly !
         const start = Math.floor(Date.now() / 1000);
         let current = start;
-        let count = 0;
+        let count = 1;
         return new Promise<void>((resolve, reject) => {
             let loop = ()=> {
                 if (this.time > this.opts.era_max_cycles || count > cycles || (current - start) > this.opts.era_timeout) {
@@ -316,31 +320,42 @@ class Cube {
         })
     }
     refresh() {
-        console.log(`-- refresh scene !`)
-        const array: string[] = [];
-        this.updates.forEach((v, k) => {
-            if (v.length === 1 || (v.length > 1 && v[0] !== v[v.length - 1])) array.push(`${k},${v[v.length - 1]}`)
+        const intarr = new Int16Array(this.updates.size*4);
+        let pos = 0;
+        this.updates.forEach((cell, k) => {
+            if (cell instanceof Cell) {
+                intarr[pos++]=cell.location[0];
+                intarr[pos++]=cell.location[1];
+                intarr[pos++]=cell.location[2];
+                intarr[pos++]=cell.plant.plantid;
+            } else {
+                const [x, y, z] = k.split(/,/).map( c => parseInt(c,10));
+                intarr[pos++]=x;
+                intarr[pos++]=y;
+                intarr[pos++]=z;
+                intarr[pos++]=-1;
+            }
         });
-        (<any>postMessage)({ type: 'update', updates: array});
-        this.updates = new Map<string, number[]>();
+        // console.log (`sending updates : ${Array.prototype.slice.call(intarr)}`);
+        (<any>postMessage)({ type: 'update', updates: intarr.buffer}, [intarr.buffer]);
+        this.updates = new Map<string, Cell>();
     }
-    update(location: Coords, plant: number = -1) {
-        const key = `${location[0]},${location[1]},${location[2]}`
-        if (!this.updates.has(key)) this.updates.set(key, [])
-        this.updates.get(key).push(plant);
+    update(cell: Cell, remove: boolean = false) {
+        const key = `${cell.location[0]},${cell.location[1]},${cell.location[2]}`
+        this.updates.set(key, remove ? -1 : cell)
     }
     birth(cell: Cell) {
-        this.set(cell.location, cell);
-        this.cell_pop++;
-        this.birth_cycle++;
-        this.update(cell.location, cell.plant.plantid)
-        if (this.opts.log.birth) console.log('Cell birth at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, this.plants[cell.plant.plantid].size)
+        this.cell_pop++
+        this.birth_cycle++
+        this.set(cell.location, cell)
+        this.update(cell)
+        if (this.opts.log.birth) console.log('Cell BIRTH at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, cell.plant.size)
     }
     death(cell: Cell) {
-        this.delete(cell.location);
-        this.cell_pop--;
-        this.death_cycle++;
-        this.update(cell.location, -1)
-        if (this.opts.log.death) console.log('Cell dead at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, this.plants[cell.plant.plantid].size)
+        this.cell_pop--
+        this.death_cycle++
+        this.delete(cell.location)
+        this.update(cell,true)
+        if (this.opts.log.death) console.log('Cell DEATH at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, cell.plant.size)
     }
 }

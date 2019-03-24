@@ -1,4 +1,4 @@
-/* global THREE, COLORS, Vue */
+/* global THREE, HCOLORS, Vue */
 
 const C3DState = {
     idle: 'idle',
@@ -9,6 +9,18 @@ const C3DState = {
 
 class Cube3d {
     constructor() {
+        this.options = {
+            genome_size: 10,
+            cube_width: 100,
+            cube_pop_size: 100,
+            photons_per_drop: 5,
+            era_timeout: 300,
+            era_max_cycles: 200,
+            cell_max_photons: 3,
+            cell_init_photons: 0,
+            cell_max_fasting: 3,
+            scene_update_range: 100,
+        };
         this.state = C3DState.idle;
         this.elem = 'div3d';
         this.vue = new Vue({
@@ -18,18 +30,7 @@ class Cube3d {
                 conf: false,
                 sidenav: true,
                 // options
-                options: {
-                    genome_size: 10,
-                    cube_width: 100,
-                    cube_pop_size: 100,
-                    photons_per_drop: 5,
-                    era_timeout: 300,
-                    era_max_cycles: 200,
-                    cell_max_photons: 3,
-                    cell_init_photons: 0,
-                    cell_max_fasting: 3,
-                    scene_update_range: 100,
-                },
+                options: this.options,
                 // logging
                 title: 'The Cube !',
                 time: 0,
@@ -40,6 +41,11 @@ class Cube3d {
             },
             methods: {
                 start: () => {
+                    this.vue.$data.time = 0;
+                    this.vue.duration = 0;
+                    this.vue.population = 0;
+                    this.vue.birth = 0;
+                    this.vue.death = 0;
                     this.terminate();
                     this.start(this.vue.$data.options);
                 },
@@ -54,26 +60,28 @@ class Cube3d {
         // Cube worker
         this.worker = new Worker('worker.js');
         this.worker.onmessage = (event) => {
-            console.log(`message receive on PAGE of type ${event.data.type}`);
-            if (this[event.data.type]) this[event.data.type](event.data);
+            // console.log(`message receive on PAGE of type ${event.data.type}`);
+            if (this[event.data.type]) this[event.data.type](event.data, event.tr);
             return true;
         };
     }
 
     start() {
         if (this.state !== C3DState.idle) return;
+        const w = 0.01;
+        const W = this.options.cube_width * w;
         // Create an empty scene
         this.scene = new THREE.Scene();
         this.plant_materials = [];
         // Create a basic perspective camera
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
-        this.camera.up.set(0, 0, 1);
-        this.camera.position.set(1.1, 1.1, 0.1); // Set position like this
+        this.camera.up.set(0, 0, 1); // fixe le haut de la camera
+        this.camera.position.set(W + 0.1, W + 0.1, 0.1); // Set position like this
         this.camera.lookAt(new THREE.Vector3(0, 0, 0.1)); // Set look at coordinate like this
 
         // Create a renderer with Antialiasing
         this.renderer = new THREE.WebGLRenderer({ antialias: false });
-        this.box = new THREE.BoxGeometry(0.01, 0.01, 0.01);
+        this.box = new THREE.BoxGeometry(w, w, w);
 
         // Configure renderer clear color
         this.renderer.setClearColor(0xC0C0C0);
@@ -84,41 +92,27 @@ class Cube3d {
         this.renderer.shadowMap.type = THREE.BasicShadowMap;
         // Append Renderer to DOM
         document.getElementById(this.elem).appendChild(this.renderer.domElement);
-        // eslint-disable-next-line no-unused-vars
-        // this.controls = new THREE.TrackballControls(this.camera, this.renderer.domElement);
 
         const xline = new THREE.Geometry();
         xline.vertices.push(new THREE.Vector3(0, 0, 0));
-        xline.vertices.push(new THREE.Vector3(2, 0, 0));
-
+        xline.vertices.push(new THREE.Vector3(1.5 * W, 0, 0));
         const yline = new THREE.Geometry();
         yline.vertices.push(new THREE.Vector3(0, 0, 0));
-        yline.vertices.push(new THREE.Vector3(0, 2, 0));
-
+        yline.vertices.push(new THREE.Vector3(0, 1.5 * W, 0));
         const zline = new THREE.Geometry();
         zline.vertices.push(new THREE.Vector3(0, 0, 0));
-        zline.vertices.push(new THREE.Vector3(0, 0, 2));
-
-
+        zline.vertices.push(new THREE.Vector3(0, 0, 1.5 * W));
         const xaxe = new THREE.Line(xline, new THREE.LineBasicMaterial({ color: 0xff0000 }));
         const yaxe = new THREE.Line(yline, new THREE.LineBasicMaterial({ color: 0x00ff00 }));
         const zaxe = new THREE.Line(zline, new THREE.LineBasicMaterial({ color: 0x0000ff }));
-
-        // const gridXZ = new THREE.GridHelper(1, 100);
-        // gridXZ.position.set(0.5, 0, 0.5);
-        const gridXY = new THREE.GridHelper(1, 100);
-        gridXY.position.set(0.5, 0.5, 0);
+        const gridXY = new THREE.GridHelper(this.options.cube_width * 0.01, this.options.cube_width);
+        gridXY.position.set(W / 2, W / 2, 0);
         gridXY.rotation.x = Math.PI / 2;
-        // const gridYZ = new THREE.GridHelper(1, 100);
-        // gridYZ.position.set(0, 0.5, 0.5);
-        // gridYZ.rotation.z = Math.PI / 2;
 
         this.scene.add(xaxe);
         this.scene.add(yaxe);
         this.scene.add(zaxe);
-        // this.scene.add(gridXZ);
         this.scene.add(gridXY);
-        // this.scene.add(gridYZ);
 
         // LIGHTS
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -126,36 +120,24 @@ class Cube3d {
 
         const light = new THREE.PointLight(0xffffff, 0.8, 18);
         light.castShadow = true;
-        light.position.set(0, 1, 1);
+        light.position.set(0, W, W);
         this.scene.add(light);
 
         window.addEventListener('wheel', (ev) => {
-            this.camera.translateZ(-Math.sign(ev.deltaY) * 0.01);
+            this.camera.translateZ(-Math.sign(ev.deltaY) * w);
             this.changed = true;
         });
 
-        // let oldx;
-        // window.addEventListener('mousemove', (ev) => {
-        //     // console.log('rotate');
-        //     if (oldx !== null) {
-        //         const sign = Math.sign(oldx - ev.screenX);
-        //         console.log(`rotate ${sign}`);
-        //         // this.camera.rotateY(sign * Math.PI / 1800);
-        //         // this.changed = true;
-        //     }
-        //     oldx = ev.screenX;
-        // });
-
         window.addEventListener('keydown', (ev) => {
             switch (ev.keyCode) {
-                case 65: this.camera.position.z += 0.05; break; // key A
-                case 81: this.camera.position.z -= 0.05; break; // key Q
-                case 38: this.camera.translateZ(-0.02); break; // Arrow UP
-                case 40: this.camera.translateZ(0.02); break; // Arrow DOWN
-                case 37: this.camera.rotateY(Math.PI / 18); break; // Arrow RIGHT
-                case 39: this.camera.rotateY(-Math.PI / 18); break; // Arrow LEFT
-                case 90: this.camera.rotateX(-Math.PI / 18); break; // Key Z
-                case 83: this.camera.rotateX(Math.PI / 18); break; // Key S
+                case 65: this.camera.position.z += w; break; // key A
+                case 81: this.camera.position.z -= w; break; // key Q
+                case 38: this.camera.translateZ(-w); break; // Arrow UP
+                case 40: this.camera.translateZ(w); break; // Arrow DOWN
+                case 37: this.camera.rotateY(Math.PI / 36); break; // Arrow RIGHT
+                case 39: this.camera.rotateY(-Math.PI / 36); break; // Arrow LEFT
+                case 90: this.camera.rotateX(-Math.PI / 36); break; // Key Z
+                case 83: this.camera.rotateX(Math.PI / 36); break; // Key S
                 default: break;
             }
             this.changed = true;
@@ -184,30 +166,35 @@ class Cube3d {
 
     update(message) {
         if (this.state !== C3DState.running) return;
-        message.updates.forEach((v) => {
-            let [x, y, z, plant] = v.split(/,/);
-            x = parseInt(x, 10);
-            y = parseInt(y, 10);
-            z = parseInt(z, 10);
-            plant = parseInt(plant, 10);
+        const intarr = new Int16Array(message.updates);
+        for (let pos = 0; pos < intarr.length; pos += 4) {
+            const x = intarr[pos];
+            const y = intarr[pos + 1];
+            const z = intarr[pos + 2];
+            const plant = intarr[pos + 3];
             const name = `${x},${y},${z}`;
             const mesh = this.scene.getObjectByName(name);
-            if (mesh) this.scene.remove(mesh);
-            if (plant >= 0) {
+            if (plant < 0) {
+                if (mesh) this.scene.remove(mesh);
+            } else {
                 let material = this.plant_materials[plant];
-                const color = COLORS[plant % COLORS.length];
                 if (!material) {
-                    // material = new THREE.MeshBasicMaterial({ color });
-                    material = new THREE.MeshPhongMaterial({ color, wireframe: false });
+                    const color = new THREE.Color(HCOLORS[plant % HCOLORS.length]);
+                    material = new THREE.MeshPhongMaterial({ color: color, wireframe: false });
                     this.plant_materials[plant] = material;
                 }
-                const cube = new THREE.Mesh(this.box, material);
-                cube.receiveShadow = true;
-                // cube.castShadow = true;
-                cube.position.set(x / 100, y / 100, z / 100);
-                this.scene.add(cube);
+                if (mesh) {
+                    mesh.material = material;
+                } else {
+                    const cube = new THREE.Mesh(this.box, material);
+                    cube.receiveShadow = true;
+                    // cube.castShadow = true;
+                    cube.position.set(x / 100, y / 100, z / 100);
+                    cube.name = name;
+                    this.scene.add(cube);
+                }
             }
-        });
+        }
         this.changed = true;
     }
 
@@ -215,7 +202,7 @@ class Cube3d {
         const render = () => {
             requestAnimationFrame(render);
             if (this.changed) {
-                // this.controls.update();
+                console.log(`RENDERING ${this.scene.children.length} objects `);
                 this.renderer.render(this.scene, this.camera);
                 this.changed = false;
             }

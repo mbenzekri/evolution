@@ -27,8 +27,8 @@ const DEFAULT_OPTIONS = {
     cell_max_fasting: 3,
     scene_update_range: 100,
     log: {
-        birth: false,
-        death: false,
+        birth: true,
+        death: true,
         consume: false,
         absorb: false,
         steps: false,
@@ -43,12 +43,12 @@ class Cell {
         this.location = location;
         this._step = 0;
         this._photons = 0;
-        if (!plant)
-            this.plant = this;
         this.genome = genome;
         this.absorb(photons);
-        this.plant.push(this);
-        this.world.birth(this);
+        if (plant) {
+            this.plant.push(this);
+            this.world.birth(this);
+        }
     }
     get photons() { return this._photons; }
     die() {
@@ -162,6 +162,7 @@ class Plant extends Cell {
         super(world, null, genome, location, world.opts.cell_init_photons);
         this.plantid = this.world.plants.length;
         this.cells = new Map();
+        this.plant = this;
         world.plants.push(this);
         this.world.birth(this);
     }
@@ -298,7 +299,7 @@ class Cube {
     cycle(cycles = this.opts.era_max_cycles) {
         const start = Math.floor(Date.now() / 1000);
         let current = start;
-        let count = 0;
+        let count = 1;
         return new Promise((resolve, reject) => {
             let loop = () => {
                 if (this.time > this.opts.era_max_cycles || count > cycles || (current - start) > this.opts.era_timeout) {
@@ -327,36 +328,45 @@ class Cube {
         });
     }
     refresh() {
-        console.log(`-- refresh scene !`);
-        const array = [];
-        this.updates.forEach((v, k) => {
-            if (v.length === 1 || (v.length > 1 && v[0] !== v[v.length - 1]))
-                array.push(`${k},${v[v.length - 1]}`);
+        const intarr = new Int16Array(this.updates.size * 4);
+        let pos = 0;
+        this.updates.forEach((cell, k) => {
+            if (cell instanceof Cell) {
+                intarr[pos++] = cell.location[0];
+                intarr[pos++] = cell.location[1];
+                intarr[pos++] = cell.location[2];
+                intarr[pos++] = cell.plant.plantid;
+            }
+            else {
+                const [x, y, z] = k.split(/,/).map(c => parseInt(c, 10));
+                intarr[pos++] = x;
+                intarr[pos++] = y;
+                intarr[pos++] = z;
+                intarr[pos++] = -1;
+            }
         });
-        postMessage({ type: 'update', updates: array });
+        postMessage({ type: 'update', updates: intarr.buffer }, [intarr.buffer]);
         this.updates = new Map();
     }
-    update(location, plant = -1) {
-        const key = `${location[0]},${location[1]},${location[2]}`;
-        if (!this.updates.has(key))
-            this.updates.set(key, []);
-        this.updates.get(key).push(plant);
+    update(cell, remove = false) {
+        const key = `${cell.location[0]},${cell.location[1]},${cell.location[2]}`;
+        this.updates.set(key, remove ? -1 : cell);
     }
     birth(cell) {
-        this.set(cell.location, cell);
         this.cell_pop++;
         this.birth_cycle++;
-        this.update(cell.location, cell.plant.plantid);
+        this.set(cell.location, cell);
+        this.update(cell);
         if (this.opts.log.birth)
-            console.log('Cell birth at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, this.plants[cell.plant.plantid].size);
+            console.log('Cell BIRTH at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, cell.plant.size);
     }
     death(cell) {
-        this.delete(cell.location);
         this.cell_pop--;
         this.death_cycle++;
-        this.update(cell.location, -1);
+        this.delete(cell.location);
+        this.update(cell, true);
         if (this.opts.log.death)
-            console.log('Cell dead at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, this.plants[cell.plant.plantid].size);
+            console.log('Cell DEATH at %s plant %d as %d cells', JSON.stringify(cell.location), cell.plant.plantid, cell.plant.size);
     }
 }
 //# sourceMappingURL=cube.js.map
